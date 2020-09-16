@@ -91,7 +91,7 @@ private:
 class BulkTrans : public USBTrans
 {
 public:
-	BulkTrans(uint64_t timeout = 2000) : m_timeout{timeout} {}
+	BulkTrans(uint64_t timeout = 20000) : m_timeout{timeout} {}
 	~BulkTrans() override { if (m_devhandle) close();  m_devhandle = nullptr; }
 
 	int open(void *p) override;

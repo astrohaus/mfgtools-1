@@ -228,7 +228,7 @@ int BulkTrans::write(void *buff, size_t size)
 			nullptr,
 			0,
 			&actual_lenght,
-			2000
+			m_timeout
 		);
 
 		if (ret < 0)
