@@ -967,12 +967,77 @@ int uuu_auto_detect_file(const char *filename)
 	return added_default_boot_cmd(fn.c_str());
 }
 
+uint32_t usbBoards = 0;
+uint32_t threadsRunning = 0;
+bool canExit=false;
+uint32_t boardInError = 0;
+
+void checkCanExit(void *p)
+{
+	printf("\n threadsRunning %i usbBoards %i\n", threadsRunning, usbBoards);
+	if (canExit)
+	{
+		if (boardInError == 0)
+		{
+			if ((threadsRunning == 0) && (usbBoards == 0))
+			{
+				// NOTE : Everything is fine
+				printf("\nCan exit now\n");
+				*(std::atomic<int> *) p = 1;
+			}
+		}else
+		{
+			if (threadsRunning == 0)
+			{
+				// NOTE : One board failed or more failed
+				printf("\nAbort now\n");
+				*(std::atomic<int> *) p = 1;
+			}
+		}
+	}
+}
+
 int notify_done(uuu_notify nt, void *p)
 {
+	if (nt.type == uuu_notify::NOTIFY_NEW_USB_DEVICE)
+	{
+		printf("\nNOTIFY_NEW_USB_DEVICE\n");
+		usbBoards++;
+	}
+
+	if (nt.type == uuu_notify::NOTIFY_USB_DEVICE_LOST)
+	{
+		printf("\nNOTIFY_USB_DEVICE_LOST\n");
+		usbBoards--;
+		checkCanExit(p);
+	}
+
+	if (nt.type == uuu_notify::NOFITY_DEV_ATTACH)
+	{
+		printf("\nNOFITY_DEV_ATTACH\n");
+		threadsRunning++;
+	}
+	
+	if (nt.type == uuu_notify::NOTIFY_THREAD_EXIT)
+	{
+		printf("\nNOTIFY_THREAD_EXIT\n");
+		threadsRunning--;
+		checkCanExit(p);
+	}
+	
+	
 	if(nt.type == uuu_notify::NOTIFY_DONE)
-		*(std::atomic<int> *) p = 1;
+        {
+		printf("\nNOTIFY_DONE\n");
+		// At least one board complete.
+		canExit = true;
+        }
 	if (nt.type == uuu_notify::NOTIFY_CMD_END && nt.status)
-		*(std::atomic<int> *) p = 1;
+	{
+		printf("\nNOTIFY_CMD_END nt.status : %i\n",nt.status);
+		canExit = true;
+		boardInError ++;
+	}
 
 	return 0;
 }

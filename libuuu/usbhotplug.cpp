@@ -162,6 +162,10 @@ static int usb_add(libusb_device *dev)
 	if (item)
 	{
 		g_known_device_appeared = 1;
+		uuu_notify nt;
+		nt.type = uuu_notify::NOTIFY_NEW_USB_DEVICE;
+		call_notify(nt);
+
 		std::thread(run_usb_cmds, item, dev).detach();
 	}
 	return 0;
@@ -169,7 +173,9 @@ static int usb_add(libusb_device *dev)
 
 static int usb_remove(libusb_device * /*dev*/)
 {
-
+	uuu_notify nt;
+	nt.type = uuu_notify::NOTIFY_USB_DEVICE_LOST;
+	call_notify(nt);
 	return 0;
 }
 
