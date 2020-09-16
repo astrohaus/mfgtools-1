@@ -1071,7 +1071,8 @@ int main(int argc, char **argv)
 	runshell(shell);
 
 	/*Wait for the other thread exit, after send out CMD_DONE*/
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	/* NEVER SYNCHRONIZE THREAD THIS WAY !!! */
+	// std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	if(!g_verbose)
 		printf("\n\n\n");
 	return g_overall_status;
